@@ -5,6 +5,7 @@ import {
     setSuccessResponse,
     setNotFoundResponse
 } from "./response-handler.js";
+import { createWallet, createInvoice} from "../service/LightningService.js";
 import { v4 as uuidv4 } from 'uuid';
 
 export const createArticle = async (request, response) => {
@@ -15,8 +16,36 @@ export const createArticle = async (request, response) => {
         if (!articleData.articleId) {
             articleData.articleId = uuidv4();
         }
-        
+
+        // Create wallet Id
+        if (!articleData.walletId) {
+            articleData.walletId = uuidv4(); // Generate a unique wallet ID if not provided
+            await createWallet(articleData.walletId)
+                .then(wallet => {
+                    console.log("Wallet created successfully:", wallet);
+                })
+                .catch(err => {
+                    console.error("Error creating wallet:", err);
+                });
+        }
+
+        // Create Invoice
+        const invoice = await createInvoice(articleData.articleId, articleData.amount);
+
+        //add invoice to the saved article
+        articleData.payment = {
+            status: 'pending',
+            invoiceId: invoice.id,
+            paymentRequest: invoice.request,
+            amount: invoice.tokens,
+            expiresAt: invoice.expiresAt,
+            bolt11: invoice.bolt11 // Store the bolt11 string for reference
+        };
+
         const savedArticle = await ArticleService.save(articleData);
+
+        console.log(savedArticle.payment)
+
         setCreateResponse(savedArticle, response);
     } catch (error) {
         console.error("Error creating article:", error);
@@ -83,3 +112,4 @@ export const deleteArticle = async (request, response) => {
         setErrorResponse(error, response);
     }
 };
+

@@ -34,6 +34,28 @@ const ArticleSchema = new Schema({
         enum: ["Technology", "Sports", "Entertainment", "Politics", "Business", "Miscellaneous"],
         required: true
     },
+    // Payment fields for Lightning
+    payment: {
+        status: {
+            type: String,
+            enum: ['pending', 'paid', 'expired'],
+            default: 'pending'
+        },
+        invoiceId: String,
+        paymentRequest: String,
+        amount: Number,
+        expiresAt: Date,
+        bolt11: String
+    },
+    published: {
+        type: Boolean,
+        default: false
+    },
+    walletId: {
+        type: String,
+        required: false, // Optional for now, can be set later
+        default: null
+    }
 });
 
 const ArticlesModel = mongoose.model("Article", ArticleSchema);
