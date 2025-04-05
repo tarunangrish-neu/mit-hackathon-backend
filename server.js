@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import initialize from "./app/app.js";
 import { closeDbConnection } from "./app/utils/Mongo.js";
+import { closeNostrConnections } from "./app/service/NostrService.js";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ const handleShutdown = async () => {
   server.close(async () => {
     console.log('Server closed');
     await closeDbConnection();
+    closeNostrConnections();
   });
 };
 

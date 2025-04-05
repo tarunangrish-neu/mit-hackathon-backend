@@ -3,6 +3,7 @@ import express from "express";
 import initializeRoutes from "./routes/index.js";
 import { createDbConnection } from "./utils/Mongo.js";
 import { initLightningConnection } from "./service/LightningService.js";
+import { closeNostrConnections } from "./service/NostrService.js";
 
 const initialize = async (app) => {
     try {

@@ -55,6 +55,19 @@ const ArticleSchema = new Schema({
         type: String,
         required: false, // Optional for now, can be set later
         default: null
+    },
+    // Nostr related fields
+    nostrEventId: {
+        type: String,
+        required: false
+    },
+    nostrNip19EventId: {
+        type: String,
+        required: false
+    },
+    nostrPubkey: {
+        type: String,
+        required: false
     }
 });
 
