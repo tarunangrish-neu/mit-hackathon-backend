@@ -87,7 +87,6 @@ export const getWalletBalance = async () => {
     }
 };
 
-
 // Create Wallet 
 export const createWallet = async (name) => {
     try {
@@ -102,5 +101,79 @@ export const createWallet = async (name) => {
     } catch (error) {
         console.error('Error creating wallet:', error.response?.data || error.message);
         throw error;
+    }
+};
+
+// Make a payment to an external wallet/invoice
+export const makePayment = async ({ destination, amount, memo, id }) => {
+    try {
+        console.log(`Attempting to pay ${amount} sats to ${destination}`);
+        
+        // For wallet-to-wallet transfers within LNbits, we need to create a payment
+        const response = await lnbitsApi.post('/api/v1/payments', {
+            out: true,
+            bolt11: destination, // Assuming destination is a BOLT11 invoice
+            amount: amount,
+            memo: memo || `Payout: ${id}`
+        });
+
+        console.log("Payment response:", response.data);
+
+        return {
+            success: true,
+            id: response.data.payment_hash,
+            amount: amount,
+            preimage: response.data.preimage,
+            timestamp: new Date().toISOString()
+        };
+    } catch (error) {
+        console.error('Error making Lightning payment:', error.response?.data || error.message);
+        throw new Error(`Payment failed: ${error.message}`);
+    }
+};
+
+// Alternative implementation if destination is a wallet ID, not an invoice
+export const payToWallet = async ({ walletId, amount, memo, id }) => {
+    try {
+        console.log(`Attempting to pay ${amount} sats to wallet ${walletId}`);
+        
+        // First, we need to get the wallet's address
+        const walletResponse = await axios.get(`${LNBITS_URL}/api/v1/wallet/${walletId}`);
+        
+        if (!walletResponse.data || !walletResponse.data.address) {
+            throw new Error('Could not retrieve wallet information');
+        }
+        
+        // Then make the payment
+        const response = await lnbitsApi.post('/api/v1/payments', {
+            out: true,
+            amount: amount,
+            memo: memo || `Payout: ${id}`,
+            internal: true,
+            destination_wallet: walletId
+        });
+
+        console.log("Payment response:", response.data);
+
+        return {
+            success: true,
+            id: response.data.payment_hash,
+            amount: amount,
+            timestamp: new Date().toISOString()
+        };
+    } catch (error) {
+        console.error('Error making wallet payment:', error.response?.data || error.message);
+        throw new Error(`Wallet payment failed: ${error.message}`);
+    }
+};
+
+// Check payment status
+export const checkPayment = async (invoiceId) => {
+    try {
+        const invoiceStatus = await checkInvoice(invoiceId);
+        return invoiceStatus.isPaid;
+    } catch (error) {
+        console.error('Error checking payment:', error);
+        return false;
     }
 };

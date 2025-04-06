@@ -4,6 +4,7 @@ import initializeRoutes from "./routes/index.js";
 import { createDbConnection } from "./utils/Mongo.js";
 import { initLightningConnection } from "./service/LightningService.js";
 import { closeNostrConnections } from "./service/NostrService.js";
+import { initializePrizePool } from './service/PrizePoolService.js';
 
 const initialize = async (app) => {
     try {
@@ -21,6 +22,9 @@ const initialize = async (app) => {
         
         // Test LNbits connection
         await initLightningConnection();
+        
+        // Initialize prize pool
+        await initializePrizePool();
         
         // Initialize routes
         initializeRoutes(app);
