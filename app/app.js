@@ -8,6 +8,12 @@ import { closeNostrConnections } from "./service/NostrService.js";
 const initialize = async (app) => {
     try {
         app.use(cors());
+        app.use((req, res, next) => {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Headers", "*");
+            res.header("Access-Control-Allow-Methods", "*");
+            next();
+          });
         app.use(express.json());
         
         // Connect to database

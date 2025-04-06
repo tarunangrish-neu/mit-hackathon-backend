@@ -11,6 +11,8 @@ import { v4 as uuidv4 } from 'uuid';
 export const createArticle = async (request, response) => {
     try {
         const articleData = request.body;
+
+        console.log("Article data:", articleData);
         
         // Add unique articleId if not provided
         if (!articleData.articleId) {
