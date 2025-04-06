@@ -12,4 +12,7 @@ router.route('/:id')
   .put(articleController.updateArticle)
   .delete(articleController.deleteArticle);
 
+router.route('/:id/votes')
+  .patch(articleController.updateVotes);
+
 export default router;

@@ -115,3 +115,62 @@ export const deleteArticle = async (request, response) => {
     }
 };
 
+export const updateVotes = async (request, response) => {
+    try {
+        const articleId = request.params.id;
+        
+        // Check if request body exists
+        if (!request.body) {
+            return setErrorResponse({
+                message: "Request body is missing"
+            }, response);
+        }
+        
+        const { voteType, action } = request.body;
+        
+        // Validate parameters
+        if (!voteType || !['upvote', 'downvote'].includes(voteType)) {
+            return setErrorResponse({
+                message: "Invalid voteType. Must be 'upvote' or 'downvote'"
+            }, response);
+        }
+        
+        if (!action || !['add', 'remove'].includes(action)) {
+            return setErrorResponse({
+                message: "Invalid action. Must be 'add' or 'remove'"
+            }, response);
+        }
+        
+        // Fetch the current article
+        const article = await ArticleService.get(articleId);
+        if (!article) {
+            return setNotFoundResponse("Article not found", response);
+        }
+        
+        // Determine the update
+        const updateData = {};
+        if (voteType === 'upvote') {
+            updateData.upvotes = action === 'add' 
+                ? article.upvotes + 1 
+                : Math.max(0, article.upvotes - 1);
+        } else {
+            updateData.downvotes = action === 'add' 
+                ? article.downvotes + 1 
+                : Math.max(0, article.downvotes - 1);
+        }
+        
+        // Update the article
+        const updatedArticle = await ArticleService.updateById(articleId, updateData);
+        
+        setSuccessResponse({
+            articleId,
+            upvotes: updatedArticle.upvotes,
+            downvotes: updatedArticle.downvotes
+        }, response);
+        
+    } catch (error) {
+        console.error("Error updating votes:", error);
+        setErrorResponse(error, response);
+    }
+};
+

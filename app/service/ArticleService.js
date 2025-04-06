@@ -71,15 +71,37 @@ export const getAll = async () => {
 
 export const updateById = async (articleId, updateData) => {
   try {
-    // Update on Nostr
-    const nostrResult = await NostrService.updateArticle(articleId, updateData);
+    // Only update on Nostr if we're updating content or title
+    let enrichedUpdateData = {...updateData};
     
-    // Add Nostr metadata to update data
-    const enrichedUpdateData = {
-      ...updateData,
-      nostrEventId: nostrResult.eventId,
-      nostrNip19EventId: nostrResult.nip19EventId
-    };
+    if (updateData.content || updateData.title) {
+      // Get the current article to pass complete data to Nostr
+      const currentArticle = await ArticlesModel.findOne({ articleId }).exec();
+      if (!currentArticle) {
+        throw new Error("Article not found");
+      }
+      
+      // Prepare complete article data for Nostr update
+      const articleData = {
+        articleId,
+        title: updateData.title || currentArticle.title,
+        content: updateData.content || currentArticle.content,
+        category: currentArticle.category
+      };
+      
+      // Update on Nostr
+      const nostrResult = await NostrService.updateArticle(articleId, articleData);
+      
+      // Add Nostr metadata to update data
+      enrichedUpdateData = {
+        ...updateData,
+        nostrEventId: nostrResult.eventId,
+        nostrNip19EventId: nostrResult.nip19EventId
+      };
+    } else {
+      // Skip Nostr update for vote counts and other metadata
+      console.log("Skipping Nostr update for non-content changes");
+    }
     
     // Update in MongoDB
     return await ArticlesModel.findOneAndUpdate(
@@ -88,6 +110,7 @@ export const updateById = async (articleId, updateData) => {
       { new: true }
     ).exec();
   } catch (error) {
+    console.error("Error in updateById:", error);
     throw error;
   }
 };
